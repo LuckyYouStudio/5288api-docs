@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5288API 使用文档</title>
+<meta name="description" content="5288API（sub2api 中转站）注册、创建密钥、配置 Codex / Claude Code / Gemini 的图文教程与常见问题。">
+<style>
+/* 布局：左侧固定目录 + 右侧单栏正文，窄屏时目录折叠到顶部 */
+:root {
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --fg: #1c2321;
+  --muted: #5c6865;
+  --line: #dfe5e2;
+  --accent: #0f8f7e;
+  --accent-soft: #e3f4f0;
+  --warn-bg: #fff6e5;
+  --warn-fg: #8a5300;
+  --warn-line: #f2d49a;
+  --code-bg: #eef2f0;
+  --font-body: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --surface: #1a2220; --fg: #e6ebe9; --muted: #9aa6a2; --line: #2b3734;
+    --accent: #3fc6b2; --accent-soft: #163631; --warn-bg: #2d2412; --warn-fg: #f0c06a; --warn-line: #5a4620;
+    --code-bg: #222c29; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --surface: #1a2220; --fg: #e6ebe9; --muted: #9aa6a2; --line: #2b3734;
+  --accent: #3fc6b2; --accent-soft: #163631; --warn-bg: #2d2412; --warn-fg: #f0c06a; --warn-line: #5a4620;
+  --code-bg: #222c29; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.75;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+img { max-width: 100%; height: auto; display: block; }
+code, pre { font-family: var(--font-mono); font-size: 0.9em; }
+code { background: var(--code-bg); padding: 0.1em 0.4em; border-radius: 4px; }
+pre {
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.9rem 1rem; overflow-x: auto; margin: 0; line-height: 1.6;
+}
+pre code { background: none; padding: 0; }
+
+.layout {
+  display: grid; grid-template-columns: 240px minmax(0, 1fr);
+  max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; gap: 3rem;
+}
+nav.toc {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.5rem); align-self: start;
+  font-size: 0.9rem;
+}
+nav.toc .brand { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem; }
+nav.toc .brand small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.08em; }
+nav.toc ol { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 0.15rem; }
+nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 0.3rem 0.6rem; border-left: 2px solid var(--line); }
+nav.toc a:hover { color: var(--fg); border-color: var(--accent); }
+nav.toc li.sub a { padding-left: 1.4rem; font-size: 0.85rem; }
+
+main { min-width: 0; max-width: 46rem; }
+header.hero { border-bottom: 1px solid var(--line); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+header.hero h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 0.5rem; text-wrap: balance; }
+header.hero p { margin: 0; color: var(--muted); }
+.quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.75rem; margin-top: 1.25rem; }
+.quick > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.75rem 1rem; min-width: 0; }
+.quick .label { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+.quick .value { font-family: var(--font-mono); font-size: 0.9rem; word-break: break-all; }
+
+section { margin-bottom: 3rem; }
+section h2 { font-size: 1.5rem; margin: 0 0 0.25rem; padding-top: 0.5rem; text-wrap: balance; }
+section h2 + .lede { color: var(--muted); margin: 0 0 1.25rem; }
+section h3 { font-size: 1.1rem; margin: 1.75rem 0 0.5rem; }
+section h3 .num { color: var(--accent); font-family: var(--font-mono); font-size: 0.85em; margin-right: 0.5rem; }
+p { margin: 0.5rem 0; }
+ol.steps, ul { padding-left: 1.4rem; margin: 0.5rem 0; }
+ol.steps li, ul li { margin: 0.3rem 0; }
+
+figure { margin: 1rem 0; }
+figure img { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+figure.small img { max-width: 320px; }
+figure.qr img { max-width: 300px; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
+
+.note {
+  display: flex; gap: 0.75rem; align-items: flex-start;
+  background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line);
+  border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+}
+.note strong { flex-shrink: 0; }
+.tip { background: var(--accent-soft); border-color: transparent; color: var(--fg); }
+
+.copyblock { position: relative; margin: 0.75rem 0; }
+.copyblock button {
+  position: absolute; top: 0.45rem; right: 0.45rem; font: inherit; font-size: 0.75rem;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  border-radius: 6px; padding: 0.15rem 0.6rem; cursor: pointer;
+}
+.copyblock button:hover { color: var(--fg); border-color: var(--accent); }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; margin: 0.75rem 0; }
+th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 0.85rem; letter-spacing: 0.04em; }
+.table-wrap { overflow-x: auto; }
+
+details.faq { border-top: 1px solid var(--line); padding: 0.75rem 0; }
+details.faq:last-of-type { border-bottom: 1px solid var(--line); }
+details.faq summary { cursor: pointer; font-weight: 500; list-style: none; display: flex; gap: 0.6rem; }
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq summary::before { content: "+"; color: var(--accent); font-family: var(--font-mono); width: 1rem; }
+details.faq[open] summary::before { content: "–"; }
+details.faq .body { padding: 0.5rem 0 0.25rem 1.6rem; color: var(--fg); }
+
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; gap: 1.5rem; padding-block: 1.25rem 3rem; }
+  nav.toc { position: static; }
+  nav.toc ol { flex-direction: row; flex-wrap: wrap; gap: 0.35rem; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; }
+  nav.toc li.sub { display: none; }
+  header.hero h1 { font-size: 1.6rem; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="目录">
+    <div class="brand">5288API<small>sub2api 中转站 · 使用文档</small></div>
+    <ol>
+      <li><a href="#register">一、注册登录账户</a></li>
+      <li><a href="#apikey">二、添加 API 密钥</a></li>
+      <li><a href="#vscode">三、安装 VS Code</a></li>
+      <li><a href="#codex">四、配置 Codex</a></li>
+      <li class="sub"><a href="#ccswitch">用 CC Switch 配置（推荐）</a></li>
+      <li class="sub"><a href="#codex-manual">手动编辑配置文件</a></li>
+      <li><a href="#claude">五、配置 Claude Code</a></li>
+      <li><a href="#faq">六、常见问题</a></li>
+      <li><a href="#support">售后与群聊</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <h1>5288API（GPT / Claude / Gemini）使用与接入教程</h1>
+      <p>从注册账号、创建密钥到在 Codex、Claude Code 中接入 5288API 中转站，按顺序操作即可。</p>
+      <div class="quick">
+        <div><div class="label">中转站地址</div><div class="value"><a href="https://api.the5288.com/">https://api.the5288.com/</a></div></div>
+        <div><div class="label">OpenAI 兼容地址</div><div class="value">https://api.the5288.com/v1</div></div>
+        <div><div class="label">售后 QQ</div><div class="value">1023259101</div></div>
+        <div><div class="label">售后群号</div><div class="value">1103980511</div></div>
+      </div>
+    </header>
+
+    <section id="register">
+      <h2>一、注册登录账户</h2>
+      <p class="lede">账号用于登录后台、查询余额和创建密钥。</p>
+      <h3><span class="num">1</span>打开 5288API 官网</h3>
+      <p>官网地址：<a href="https://api.the5288.com/">https://api.the5288.com/</a>。进入官网后，点击“注册”。</p>
+      <h3><span class="num">2</span>注册一个账户</h3>
+      <p>根据页面提示填写账号和密码。</p>
+      <div class="note"><strong>注意</strong><span>账号和密码一定要自己保存好，后续登录后台、查询余额、创建密钥都需要用到。</span></div>
+    </section>
+
+    <section id="apikey">
+      <h2>二、添加 API 密钥</h2>
+      <p class="lede">密钥是工具调用中转站的凭证，每个工具填一次即可。</p>
+      <h3><span class="num">1</span>创建 API 密钥</h3>
+      <ol class="steps">
+        <li>登录后台，在左侧菜单进入“API 密钥”页面。</li>
+        <li>点击右上角“创建密钥”（部分版本叫“创建令牌”）。</li>
+        <li>名称可以随便填写，例如 <code>Codex</code>。</li>
+        <li>创建成功后复制密钥。</li>
+      </ol>
+      <figure class="small">
+        <img src="images/api-key-menu.png" alt="后台左侧菜单中的“API 密钥”入口" width="241" height="208">
+        <figcaption>左侧菜单：仪表盘 → API 密钥</figcaption>
+      </figure>
+      <figure class="small">
+        <img src="images/create-key.png" alt="API 密钥页面右上角的“创建密钥”按钮" width="302" height="100">
+        <figcaption>点击“创建密钥”</figcaption>
+      </figure>
+      <div class="note"><strong>注意</strong><span>API 密钥一般以 <code>sk-</code> 开头。不要发给别人，不要截图发群里，泄露后可能会被别人消耗余额。</span></div>
+
+      <h3><span class="num">2</span>5288API 接口地址</h3>
+      <p>通用 API 地址：</p>
+      <div class="copyblock"><pre><code>https://api.the5288.com/</code></pre><button type="button" data-copy="https://api.the5288.com/">复制</button></div>
+      <p>Codex 这类使用 OpenAI 兼容接口的工具，需要在接口地址后面加 <code>/v1</code>：</p>
+      <div class="copyblock"><pre><code>https://api.the5288.com/v1</code></pre><button type="button" data-copy="https://api.the5288.com/v1">复制</button></div>
+    </section>
+
+    <section id="vscode">
+      <h2>三、安装 VS Code</h2>
+      <p class="lede">Codex、Claude Code 等命令行工具通常在 VS Code 的终端里使用。</p>
+      <h3><span class="num">1</span>下载安装</h3>
+      <p>官方下载地址：<a href="https://code.visualstudio.com/">https://code.visualstudio.com/</a>，下载后安装即可。</p>
+      <h3><span class="num">2</span>中文插件</h3>
+      <p>打开 VS Code 后，在插件市场搜索 <code>Chinese</code>，安装中文语言包，然后重启 VS Code。</p>
+    </section>
+
+    <section id="codex">
+      <h2>四、配置 Codex</h2>
+      <p class="lede">两种方式任选其一：新手推荐用 CC Switch，熟悉配置文件的可以手动编辑。</p>
+
+      <h3 id="ccswitch"><span class="num">A</span>使用 CC Switch 快速配置（新手推荐）</h3>
+      <p>CC Switch 是一款支持 Windows、macOS、Linux 的跨平台桌面工具，可用于统一管理多个 AI CLI 工具的 API 配置，并支持快速切换不同服务。它适用于 Claude Code、OpenAI Codex、Gemini、OpenCode、OpenClaw 等工具。</p>
+      <p>详细使用说明可参考官方指南：<a href="https://github.com/farion1231/cc-switch/blob/main/README_ZH.md">cc-switch 中文 README</a>。</p>
+
+      <p><strong>第 1 步：下载 CC Switch</strong></p>
+      <p>打开 CC Switch 的 GitHub 页面：<a href="https://github.com/farion1231/cc-switch">https://github.com/farion1231/cc-switch</a>。在右侧 Releases 区域点击最新版本。</p>
+      <figure>
+        <img src="images/cc-switch-release.png" alt="cc-switch GitHub 仓库页面，右侧 Releases 区域标出了最新版本入口" width="960" height="715">
+        <figcaption>右侧 Releases → 点击 Latest 版本</figcaption>
+      </figure>
+      <p>进入版本页后，在 Assets 列表里根据自己的系统选择对应安装包：</p>
+      <div class="table-wrap">
+      <table>
+        <tr><th>系统</th><th>下载文件</th></tr>
+        <tr><td>Windows</td><td><code>CC-Switch-vX.Y.Z-Windows.msi</code>（或 Windows-Portable.zip 免安装版）</td></tr>
+        <tr><td>macOS</td><td><code>CC-Switch-vX.Y.Z-macOS.dmg</code>、<code>.zip</code> 或 <code>.tar.gz</code></td></tr>
+        <tr><td>Linux</td><td>按架构选 <code>x86_64</code> / <code>arm64</code> 的 AppImage、deb 或 rpm</td></tr>
+      </table>
+      </div>
+      <figure>
+        <img src="images/cc-switch-assets.png" alt="cc-switch 版本页面的 Assets 列表，标出了 macOS 和 Windows 安装包" width="985" height="699">
+        <figcaption>下载你对应系统的版本</figcaption>
+      </figure>
+
+      <p><strong>第 2 步：添加 Codex 配置</strong></p>
+      <p>打开 CC Switch 后，先在顶部工具栏选择 Codex 图标（①），然后点击右上角橙色的 <code>+</code> 按钮（②）添加配置：</p>
+      <figure>
+        <img src="images/cc-switch-main.png" alt="CC Switch 主界面：顶部工具栏选中 Codex，右上角橙色加号按钮" width="890" height="212" onerror="this.parentElement.hidden=true">
+        <figcaption>① 选择 Codex 工具端 → ② 点击 + 添加供应商</figcaption>
+      </figure>
+      <ol class="steps">
+        <li>点击“自定义配置”。</li>
+        <li><strong>供应商名称</strong>随便填，例如 <code>5288API</code>。备注和官网链接可以留空。</li>
+        <li><strong>API Key</strong> 填入刚才在 5288API 网页上复制的密钥。</li>
+        <li><strong>API 请求地址</strong>填写（填写兼容 OpenAI Response 格式的服务端点地址）：
+          <div class="copyblock"><pre><code>https://api.the5288.com/v1</code></pre><button type="button" data-copy="https://api.the5288.com/v1">复制</button></div>
+        </li>
+        <li><strong>模型名称</strong>填当前可用的最新模型，例如 <code>gpt-5.5</code>。也可以点“获取模型列表”查看后台支持的模型。</li>
+        <li>点击右下角“添加”按钮保存配置。</li>
+      </ol>
+      <figure>
+        <img src="images/cc-switch-add-provider.png" alt="CC Switch 添加新供应商表单：供应商名称、API Key、API 请求地址 https://api.the5288.com/v1、模型名称 gpt-5.5，右下角添加按钮" width="942" height="721" onerror="this.parentElement.hidden=true">
+        <figcaption>添加新供应商：名称随便填，官网链接不填，Key 填 5288 网页上的密钥，模型填 gpt-5.5</figcaption>
+      </figure>
+      <p>添加完成后点击“启动”，即可完成 Codex 配置。启动后<strong>重启 Codex</strong> 使配置生效。</p>
+      <div class="note tip"><strong>提示</strong><span>如果配置后无法使用，请回到后台“API 密钥”页面，检查生成密钥时是否选择了正确分组。若使用过程中突然不可用，可以重新生成 API 密钥后，再回到 CC Switch 重新配置。</span></div>
+
+      <p><strong>第 3 步：不通时改用 key 登录 Codex</strong></p>
+      <p>如果仍然不通，可以直接在 Codex 里用密钥登录：</p>
+      <ol class="steps">
+        <li>打开 Codex，在“开始使用 Codex”界面点击“使用其他方式登录”（不要点“使用 ChatGPT 登录”）。</li>
+        <li>在“OpenAI API 密钥”输入框里粘贴你创建的 5288API 密钥，点击“继续”。</li>
+        <li>新建对话发一句“你好”，能正常回复就说明可以使用了。</li>
+      </ol>
+      <figure>
+        <img src="images/codex-login.png" alt="Codex 登录界面，标出“使用其他方式登录”按钮" width="1024" height="680" onerror="this.parentElement.hidden=true">
+        <figcaption>点击“使用其他方式登录”</figcaption>
+      </figure>
+      <figure>
+        <img src="images/codex-api-key.png" alt="Codex 输入 OpenAI API 密钥的界面" width="1024" height="680" onerror="this.parentElement.hidden=true">
+        <figcaption>输入你创建的 key，点击“继续”</figcaption>
+      </figure>
+      <figure>
+        <img src="images/codex-chat.png" alt="Codex 对话界面，发送“你好”后模型正常回复" width="1215" height="612" onerror="this.parentElement.hidden=true">
+        <figcaption>测试通过，可以正常对话</figcaption>
+      </figure>
+
+      <h3 id="codex-manual"><span class="num">B</span>手动编辑 Codex 配置文件</h3>
+      <p><strong>1. 打开配置文件</strong></p>
+      <div class="table-wrap">
+      <table>
+        <tr><th>系统</th><th>路径</th></tr>
+        <tr><td>Windows</td><td><code>C:\Users\你的用户名\.codex\config.toml</code></td></tr>
+        <tr><td>Mac / Linux</td><td><code>~/.codex/config.toml</code></td></tr>
+      </table>
+      </div>
+      <p><strong>2. 填写 5288API 配置</strong></p>
+      <p>把你的 API Key 和接口地址填入 Codex 支持的 OpenAI Compatible 配置里，核心信息只有三项：</p>
+      <div class="table-wrap">
+      <table>
+        <tr><th>项目</th><th>填写内容</th></tr>
+        <tr><td>API Key</td><td>你的 5288API 密钥</td></tr>
+        <tr><td>Base URL</td><td><code>https://api.the5288.com/v1</code></td></tr>
+        <tr><td>Model</td><td>后台模型列表中支持的模型名称，例如 <code>gpt-5.5</code></td></tr>
+      </table>
+      </div>
+      <div class="note"><strong>注意</strong><span>不同版本 Codex 的配置格式可能不一样。如果配置后无法使用，优先检查这三项是否正确。</span></div>
+      <p><strong>3. 测试是否成功</strong></p>
+      <p>配置完成后打开 Codex，输入一句测试：</p>
+      <pre><code>你好，帮我写一个简单的 Python hello world</code></pre>
+      <p>如果能正常回复，说明配置成功。</p>
+    </section>
+
+    <section id="claude">
+      <h2>五、配置 Claude Code</h2>
+      <p class="lede">如果你的 5288API 后台支持 Claude / Anthropic 兼容接口，再配置 Claude Code。</p>
+      <p>同样可以在 CC Switch 中切换到 Claude Code 工具端，用“自定义配置”添加。常见填写内容：</p>
+      <div class="table-wrap">
+      <table>
+        <tr><th>项目</th><th>填写内容</th></tr>
+        <tr><td>API Key</td><td>你的 5288API 密钥</td></tr>
+        <tr><td>Base URL</td><td>5288API 后台提供的 Claude 兼容地址</td></tr>
+        <tr><td>Model</td><td>后台支持的 Claude 模型名称</td></tr>
+      </table>
+      </div>
+      <div class="note"><strong>注意</strong><span>Claude Code 和 OpenAI Codex 的接口格式不一定一样，必须以 5288API 后台显示的说明为准。</span></div>
+    </section>
+
+    <section id="faq">
+      <h2>六、常见问题</h2>
+      <p class="lede">遇到问题先按下面排查，解决不了再联系售后。</p>
+
+      <details class="faq">
+        <summary>密钥无效怎么办？</summary>
+        <div class="body">
+          <p>检查 API Key 是否复制完整，前后不要有空格。</p>
+          <p>如果还是不行，删除旧密钥，重新创建一个新的 API Key。</p>
+        </div>
+      </details>
+      <details class="faq">
+        <summary>余额兑换成功但不能用怎么办？</summary>
+        <div class="body">
+          <p>先检查是否选错分组或模型。</p>
+          <p>再检查接口地址是否加了 <code>/v1</code>，正确格式一般是：</p>
+          <pre><code>https://api.the5288.com/v1</code></pre>
+        </div>
+      </details>
+      <details class="faq">
+        <summary>提示模型不存在怎么办？</summary>
+        <div class="body">
+          <p>去 5288API 后台查看模型列表，复制完整模型名称。不要自己手打简称。</p>
+        </div>
+      </details>
+      <details class="faq">
+        <summary>请求超时怎么办？</summary>
+        <div class="body">
+          <p>可能是模型繁忙、网络不稳定、余额不足或软件配置错误。建议先换一个模型测试，再查看后台调用日志。</p>
+          <p>如果是在生成图片时超时，通常是你当前使用的账号或分组没有开通“图片生成”权限。如果并没有特意使用生图功能，可以退出 Codex 账号，改用 key 登录，然后重启 Codex 再试。</p>
+        </div>
+      </details>
+      <details class="faq">
+        <summary>API Key 能不能发给别人？</summary>
+        <div class="body">
+          <p>不能。API Key 相当于你的账户调用密码，别人拿到后可以直接消耗你的余额。</p>
+          <p>如果怀疑泄露，马上删除旧密钥并重新创建。</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="support">
+      <h2>售后与群聊</h2>
+      <p class="lede">会员 AI 学习教程与售后支持。</p>
+      <ul>
+        <li>售后 QQ：<code>1023259101</code></li>
+        <li>售后群：5288API，群号 <code>1103980511</code></li>
+      </ul>
+      <figure class="qr">
+        <img src="images/qq-group.webp" alt="5288API QQ 群二维码，群号 1103980511" width="1125" height="2000">
+        <figcaption>用 QQ 扫一扫二维码，加入群聊</figcaption>
+      </figure>
+    </section>
+
+    <footer>5288API 会员 AI 学习教程 · 中转站地址 <a href="https://api.the5288.com/">api.the5288.com</a></footer>
+  </main>
+</div>
+
+<script>
+document.querySelectorAll('.copyblock button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var text = btn.getAttribute('data-copy');
+    var done = function () { btn.textContent = '已复制'; setTimeout(function () { btn.textContent = '复制'; }, 1500); };
+    var fallback = function () {
+      var code = btn.parentElement.querySelector('code');
+      var range = document.createRange(); range.selectNodeContents(code);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  });
+});
+</script>
+</body>
+</html>
