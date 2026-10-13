@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OpenAI 模型价格表</title>
+<meta name="description" content="OpenAI API 各模型官方定价一览（每百万 token 美元），含费用计算器。">
+<style>
+/* 布局：顶部说明 + 计算器，下方按类别分组的价格表；窄屏时表格横向滚动 */
+:root {
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --fg: #1c2321;
+  --muted: #5c6865;
+  --line: #dfe5e2;
+  --accent: #0f8f7e;
+  --accent-soft: #e3f4f0;
+  --warn-bg: #fff6e5;
+  --warn-fg: #8a5300;
+  --warn-line: #f2d49a;
+  --code-bg: #eef2f0;
+  --font-body: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --surface: #1a2220; --fg: #e6ebe9; --muted: #9aa6a2; --line: #2b3734;
+    --accent: #3fc6b2; --accent-soft: #163631; --warn-bg: #2d2412; --warn-fg: #f0c06a; --warn-line: #5a4620;
+    --code-bg: #222c29; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --surface: #1a2220; --fg: #e6ebe9; --muted: #9aa6a2; --line: #2b3734;
+  --accent: #3fc6b2; --accent-soft: #163631; --warn-bg: #2d2412; --warn-fg: #f0c06a; --warn-line: #5a4620;
+  --code-bg: #222c29; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.7; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.4em; border-radius: 4px; }
+
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; }
+header.hero { border-bottom: 1px solid var(--line); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+header.hero .crumbs { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+header.hero h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 0.5rem; text-wrap: balance; }
+header.hero p { margin: 0.25rem 0; color: var(--muted); max-width: 46rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.85rem; color: var(--muted); margin-top: 0.75rem; }
+.meta b { color: var(--fg); font-weight: 500; }
+
+.note { display: flex; gap: 0.75rem; align-items: flex-start; background: var(--warn-bg); color: var(--warn-fg);
+  border: 1px solid var(--warn-line); border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.95rem; }
+.note strong { flex-shrink: 0; }
+.note a { color: inherit; }
+
+.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
+.tiers > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.75rem 1rem; min-width: 0; }
+.tiers .k { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+.tiers .v { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tiers .d { font-size: 0.85rem; color: var(--muted); }
+
+nav.jump { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0 2rem; }
+nav.jump a { font-size: 0.85rem; text-decoration: none; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.75rem; }
+nav.jump a:hover { color: var(--fg); border-color: var(--accent); }
+
+section { margin-bottom: 2.75rem; }
+section h2 { font-size: 1.4rem; margin: 0 0 0.25rem; text-wrap: balance; }
+section .lede { color: var(--muted); margin: 0 0 1rem; max-width: 46rem; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; min-width: 560px; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { color: var(--muted); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.04em; white-space: nowrap; background: var(--bg); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); white-space: nowrap; }
+td.model { font-family: var(--font-mono); font-size: 0.9rem; white-space: nowrap; }
+td .sub { display: block; font-family: var(--font-body); font-size: 0.8rem; color: var(--muted); white-space: normal; }
+.tag { display: inline-block; font-family: var(--font-body); font-size: 0.72rem; padding: 0.05rem 0.45rem; border-radius: 999px; margin-left: 0.4rem; vertical-align: middle; white-space: nowrap; }
+.tag.check { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line); }
+.tag.new { background: var(--accent-soft); color: var(--accent); }
+.tag.old { background: var(--code-bg); color: var(--muted); }
+.dash { color: var(--muted); }
+.foot { font-size: 0.85rem; color: var(--muted); margin: 0.6rem 0 0; }
+
+.calc { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.25rem; }
+.calc h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+.calc .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem 1rem; }
+.calc label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); min-width: 0; }
+.calc input, .calc select { font: inherit; font-size: 0.95rem; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); min-width: 0; width: 100%; }
+.calc .result { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; align-items: baseline; }
+.calc .result .big { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.calc .result .cny { font-size: 1.1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.calc .breakdown { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
+
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+footer ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+@media (max-width: 600px) { header.hero h1 { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="crumbs"><a href="./">5288API 使用文档</a> / 模型价格</div>
+    <h1>OpenAI 模型价格表</h1>
+    <p>按 OpenAI 官方 API 定价整理，单位为每百万 token 美元（$ / 1M tokens），图片、语音和工具另按各自单位计价。</p>
+    <div class="meta">
+      <span>数据日期 <b id="data-date">2026-10-13</b></span>
+      <span>官方来源 <b><a href="https://platform.openai.com/docs/pricing">platform.openai.com/docs/pricing</a></b></span>
+      <span>货币 <b>USD</b></span>
+    </div>
+  </header>
+
+  <div class="note"><strong>说明</strong><span>本页价格为 OpenAI 官方 API 标准档（Standard）价格，仅供换算参考；在 5288API 中转站的实际扣费以后台“模型列表”和“使用记录”显示为准。标有 <span class="tag check">待核对</span> 的行是公开来源之间数字不一致的条目，使用前请到官方定价页确认。</span></div>
+
+  <section class="calc" id="calc">
+    <h2>费用计算器</h2>
+    <div class="grid">
+      <label>模型
+        <select id="calc-model"></select>
+      </label>
+      <label>输入 token 数
+        <input id="calc-in" type="number" min="0" step="1000" value="100000">
+      </label>
+      <label>其中命中缓存的 token 数
+        <input id="calc-cached" type="number" min="0" step="1000" value="0">
+      </label>
+      <label>输出 token 数
+        <input id="calc-out" type="number" min="0" step="1000" value="20000">
+      </label>
+      <label>计费档位
+        <select id="calc-tier">
+          <option value="1">标准 Standard（×1）</option>
+          <option value="0.5">Batch / Flex（×0.5）</option>
+          <option value="2">Priority（×2）</option>
+        </select>
+      </label>
+      <label>美元兑人民币汇率
+        <input id="calc-rate" type="number" min="0" step="0.01" value="7.2">
+      </label>
+    </div>
+    <div class="result">
+      <span class="big" id="calc-usd">$0.00</span>
+      <span class="cny" id="calc-cny">≈ ¥0.00</span>
+    </div>
+    <div class="breakdown" id="calc-breakdown"></div>
+  </section>
+
+  <div class="tiers">
+    <div><div class="k">Standard</div><div class="v">×1</div><div class="d">标准实时调用，本页列出的价格</div></div>
+    <div><div class="k">Batch API</div><div class="v">×0.5</div><div class="d">批量异步，24 小时内返回，五折</div></div>
+    <div><div class="k">Flex</div><div class="v">×0.5</div><div class="d">低优先级，可能排队或超时，五折</div></div>
+    <div><div class="k">Priority</div><div class="v">×2</div><div class="d">优先处理，延迟更稳定，双倍</div></div>
+  </div>
+
+  <nav class="jump">
+    <a href="#gpt5">GPT-5 系列</a>
+    <a href="#codex">Codex 系列</a>
+    <a href="#oseries">o 系列推理</a>
+    <a href="#legacy">GPT-4.1 / 4o</a>
+    <a href="#image">图片生成</a>
+    <a href="#audio">语音与实时</a>
+    <a href="#embed">嵌入</a>
+    <a href="#tools">内置工具</a>
+  </nav>
+
+  <section id="gpt5">
+    <h2>GPT-5 系列</h2>
+    <p class="lede">当前主力模型。Pro 版本为高算力推理档，无缓存折扣。</p>
+    <div class="table-wrap" data-table="gpt5"></div>
+    <p class="foot">GPT-5.6 各档位公开来源的数字不一致（旗舰档有 $5/$30 与 $4/$20 两种说法），列出的是支持来源最多的价格。</p>
+  </section>
+
+  <section id="codex">
+    <h2>Codex 系列</h2>
+    <p class="lede">面向编程代理的模型，Codex CLI 和 Codex 应用默认使用。</p>
+    <div class="table-wrap" data-table="codex"></div>
+  </section>
+
+  <section id="oseries">
+    <h2>o 系列推理模型</h2>
+    <p class="lede">早期推理模型，逐步被 GPT-5 系列替代。</p>
+    <div class="table-wrap" data-table="oseries"></div>
+  </section>
+
+  <section id="legacy">
+    <h2>GPT-4.1 / GPT-4o</h2>
+    <p class="lede">上一代通用模型，价格稳定，适合低成本任务。</p>
+    <div class="table-wrap" data-table="legacy"></div>
+  </section>
+
+  <section id="image">
+    <h2>图片生成</h2>
+    <p class="lede">按生成图片的质量和尺寸计价，下表为 1024×1024 单张参考价；实际按图片 token 计费。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>模型</th><th class="num">低质量</th><th class="num">中质量</th><th class="num">高质量</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td class="model">gpt-image-2<span class="tag check">待核对</span></td><td class="num">$0.006</td><td class="num">$0.053</td><td class="num">$0.211</td><td>最新图片模型，各来源单价不一致</td></tr>
+          <tr><td class="model">gpt-image-1.5</td><td class="num">$0.009</td><td class="num">$0.034</td><td class="num">$0.133</td><td>图片输入 $8.00 / 缓存 $2.00 / 图片输出 $32.00（每百万 token）</td></tr>
+          <tr><td class="model">gpt-image-1<span class="tag old">即将停用</span></td><td class="num">$0.011</td><td class="num">$0.042</td><td class="num">$0.167</td><td>2026-10-23 停用；最高可到 $0.25（1536×1024 高质量）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="audio">
+    <h2>语音与实时</h2>
+    <p class="lede">实时模型按音频 token 和文本 token 分别计价；转写和合成可换算为每分钟价格。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>模型</th><th>类型</th><th class="num">输入</th><th class="num">缓存输入</th><th class="num">输出</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td class="model">gpt-realtime-2.1</td><td>音频</td><td class="num">$32.00</td><td class="num">$0.40</td><td class="num">$64.00</td><td>实时语音对话</td></tr>
+          <tr><td class="model">gpt-realtime-2.1-mini</td><td>音频</td><td class="num">$10.00</td><td class="num">$0.30</td><td class="num">$20.00</td><td rowspan="2">同一模型，音频与文本分别计价</td></tr>
+          <tr><td class="model">gpt-realtime-2.1-mini</td><td>文本</td><td class="num">$0.60</td><td class="num">$0.06</td><td class="num">$2.40</td></tr>
+          <tr><td class="model">gpt-4o-transcribe</td><td>语音转文字</td><td class="num">$2.50</td><td class="num dash">–</td><td class="num">$10.00</td><td>约 $0.006 / 分钟</td></tr>
+          <tr><td class="model">gpt-4o-mini-tts</td><td>文字转语音</td><td class="num">$0.60</td><td class="num dash">–</td><td class="num">$12.00</td><td>输入为文本、输出为音频，约 $0.015 / 分钟</td></tr>
+          <tr><td class="model">whisper-1</td><td>语音转文字</td><td class="num" colspan="3">$0.006 / 分钟</td><td>按时长计价</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="embed">
+    <h2>嵌入模型</h2>
+    <p class="lede">只计输入 token。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>模型</th><th class="num">标准</th><th class="num">Batch</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td class="model">text-embedding-3-small</td><td class="num">$0.02</td><td class="num">$0.01</td><td>1536 维</td></tr>
+          <tr><td class="model">text-embedding-3-large</td><td class="num">$0.13</td><td class="num">$0.065</td><td>3072 维</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tools">
+    <h2>内置工具</h2>
+    <p class="lede">Responses API 的托管工具，在模型 token 费用之外单独计费。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>工具</th><th class="num">价格</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>网页搜索 Web search</td><td class="num">$10.00 / 千次调用</td><td>搜索返回内容按模型 token 价计费</td></tr>
+          <tr><td>文件搜索 File search</td><td class="num">$2.50 / 千次调用</td><td>向量存储另计 $0.10 / GB / 天，首 1 GB 免费</td></tr>
+          <tr><td>代码解释器 Code interpreter</td><td class="num">$0.03 / 容器</td><td>每个会话容器一次</td></tr>
+          <tr><td>计算机操作 Computer use</td><td class="num">无单独费用</td><td>只计模型 token</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>数据整理自 OpenAI 官方定价页及其模型页，整理日期见页首。价格可能随时调整，以 <a href="https://platform.openai.com/docs/pricing">官方定价页</a> 为准。</p>
+    <ul>
+      <li>缓存输入：同一前缀在短时间内重复出现时按缓存价计费，通常为输入价的 10%。</li>
+      <li>长上下文：部分模型超过标准上下文窗口的部分按更高价计费，本页未列出。</li>
+      <li>换算示例：100 万输入 + 20 万输出用 gpt-5.5，标准档费用为 $5.00 + $6.00 = $11.00。</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+// 价格数据：单位 $ / 1M tokens。cached 为 null 表示无缓存折扣。改价只需改这里。
+var PRICES = {
+  gpt5: [
+    { id: "gpt-5.6", input: 5.00, cached: 0.50, output: 30.00, note: "旗舰档（Sol）", flags: ["check"] },
+    { id: "gpt-5.6-terra", input: 2.00, cached: 0.20, output: 12.00, note: "中档（Terra）", flags: ["check"] },
+    { id: "gpt-5.6-luna", input: 0.20, cached: 0.02, output: 1.20, note: "小档（Luna）", flags: ["check"] },
+    { id: "gpt-5.5", input: 5.00, cached: 0.50, output: 30.00, note: "旗舰，400K 上下文", flags: ["new"] },
+    { id: "gpt-5.5-pro", input: 30.00, cached: null, output: 180.00, note: "高算力推理" },
+    { id: "gpt-5.4", input: 2.50, cached: 0.25, output: 15.00, note: "" },
+    { id: "gpt-5.4-pro", input: 30.00, cached: null, output: 180.00, note: "高算力推理" },
+    { id: "gpt-5.4-mini", input: 0.75, cached: 0.075, output: 4.50, note: "400K 上下文" },
+    { id: "gpt-5.4-nano", input: 0.20, cached: 0.02, output: 1.25, note: "仅 API" },
+    { id: "gpt-5.2", input: 1.75, cached: 0.175, output: 14.00, note: "" },
+    { id: "gpt-5.1", input: 1.25, cached: 0.125, output: 10.00, note: "" },
+    { id: "gpt-5", input: 1.25, cached: 0.125, output: 10.00, note: "" },
+    { id: "gpt-5-mini", input: 0.25, cached: 0.025, output: 2.00, note: "2026-12-11 停用", flags: ["old"] },
+    { id: "gpt-5-nano", input: 0.05, cached: 0.005, output: 0.40, note: "最便宜的文本模型" }
+  ],
+  codex: [
+    { id: "gpt-5.3-codex", input: 1.75, cached: 0.175, output: 14.00, note: "400K 上下文，最大输出 128K" },
+    { id: "gpt-5.2-codex", input: 1.75, cached: 0.175, output: 14.00, note: "" },
+    { id: "gpt-5.1-codex", input: 1.25, cached: 0.125, output: 10.00, note: "" },
+    { id: "gpt-5-codex", input: 1.25, cached: 0.125, output: 10.00, note: "" }
+  ],
+  oseries: [
+    { id: "o3", input: 2.00, cached: 0.50, output: 8.00, note: "" },
+    { id: "o3-pro", input: 20.00, cached: null, output: 80.00, note: "" },
+    { id: "o4-mini", input: 1.10, cached: 0.275, output: 4.40, note: "" }
+  ],
+  legacy: [
+    { id: "gpt-4.1", input: 2.00, cached: 0.50, output: 8.00, note: "1M 上下文" },
+    { id: "gpt-4.1-mini", input: 0.40, cached: 0.10, output: 1.60, note: "1M 上下文" },
+    { id: "gpt-4.1-nano", input: 0.10, cached: 0.025, output: 0.40, note: "1M 上下文" },
+    { id: "gpt-4o", input: 2.50, cached: 1.25, output: 10.00, note: "128K 上下文" },
+    { id: "gpt-4o-mini", input: 0.15, cached: 0.075, output: 0.60, note: "128K 上下文" }
+  ]
+};
+var TAG_TEXT = { check: "待核对", new: "最新", old: "即将停用" };
+
+function fmt(v) {
+  if (v === null || v === undefined) return '<span class="dash">–</span>';
+  var s = v >= 1 ? v.toFixed(2) : v.toFixed(3).replace(/0$/, "");
+  return "$" + s;
+}
+
+document.querySelectorAll("[data-table]").forEach(function (box) {
+  var rows = PRICES[box.getAttribute("data-table")] || [];
+  var html = '<table><thead><tr><th>模型</th><th class="num">输入</th><th class="num">缓存输入</th><th class="num">输出</th><th>备注</th></tr></thead><tbody>';
+  rows.forEach(function (r) {
+    var tags = (r.flags || []).map(function (f) { return '<span class="tag ' + f + '">' + TAG_TEXT[f] + "</span>"; }).join("");
+    html += "<tr><td class=\"model\">" + r.id + tags + "</td><td class=\"num\">" + fmt(r.input) + "</td><td class=\"num\">" + fmt(r.cached) + "</td><td class=\"num\">" + fmt(r.output) + "</td><td>" + (r.note || "") + "</td></tr>";
+  });
+  html += "</tbody></table>";
+  box.innerHTML = html;
+});
+
+// 计算器
+var all = [].concat(PRICES.gpt5, PRICES.codex, PRICES.oseries, PRICES.legacy);
+var sel = document.getElementById("calc-model");
+all.forEach(function (r) {
+  var o = document.createElement("option"); o.value = r.id; o.textContent = r.id; sel.appendChild(o);
+});
+sel.value = "gpt-5.5";
+function calc() {
+  var r = all.filter(function (x) { return x.id === sel.value; })[0];
+  if (!r) return;
+  var tier = parseFloat(document.getElementById("calc-tier").value) || 1;
+  var rate = parseFloat(document.getElementById("calc-rate").value) || 0;
+  var tin = Math.max(0, +document.getElementById("calc-in").value || 0);
+  var tc = Math.min(tin, Math.max(0, +document.getElementById("calc-cached").value || 0));
+  var tout = Math.max(0, +document.getElementById("calc-out").value || 0);
+  var cachedPrice = r.cached === null ? r.input : r.cached;
+  var cIn = (tin - tc) / 1e6 * r.input * tier;
+  var cC = tc / 1e6 * cachedPrice * tier;
+  var cOut = tout / 1e6 * r.output * tier;
+  var usd = cIn + cC + cOut;
+  document.getElementById("calc-usd").textContent = "$" + (usd < 0.01 && usd > 0 ? usd.toFixed(4) : usd.toFixed(2));
+  document.getElementById("calc-cny").textContent = "≈ ¥" + (usd * rate).toFixed(2);
+  document.getElementById("calc-breakdown").textContent =
+    "输入 $" + cIn.toFixed(4) + " + 缓存输入 $" + cC.toFixed(4) + " + 输出 $" + cOut.toFixed(4) +
+    (r.cached === null ? "（该模型无缓存折扣）" : "");
+}
+["calc-model", "calc-in", "calc-cached", "calc-out", "calc-tier", "calc-rate"].forEach(function (id) {
+  document.getElementById(id).addEventListener("input", calc);
+  document.getElementById(id).addEventListener("change", calc);
+});
+calc();
+</script>
+</body>
+</html>
